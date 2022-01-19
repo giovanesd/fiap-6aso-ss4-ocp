@@ -1,4 +1,4 @@
-# fiap-6aso-ss4-ocp
+# Grupo 16 - fiap-6aso-ss4-ocp
 
 Para executar o projeto, são necessários dois passos:
 1. Criar o projeto fiap-grupo-16
