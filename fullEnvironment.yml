@@ -226,3 +226,39 @@ spec:
         target:
           averageUtilization: 20
           type: Utilization
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  annotations:
+    openshift.io/host.generated: 'true'
+  selfLink: /apis/route.openshift.io/v1/namespaces/fiap-grupo-16/routes/blog-django-py
+  resourceVersion: '24955331'
+  name: blog-django-py-new-link
+  namespace: fiap-grupo-16
+  labels:
+    app: blog-django-py
+    app.kubernetes.io/component: blog-django-py
+    app.kubernetes.io/instance: blog-django-py
+    app.kubernetes.io/name: python
+    app.kubernetes.io/part-of: blog-django-py-app
+    app.openshift.io/runtime: python
+    app.openshift.io/runtime-version: 3.8-ubi7
+spec:
+  host: blogfiap.apps.na46.prod.nextcle.com
+  to:
+    kind: Service
+    name: blog-django-py
+    weight: 100
+  port:
+    targetPort: 8080-tcp
+  wildcardPolicy: None
+status:
+  ingress:
+    - host: blogfiap.apps.na46.prod.nextcle.com
+      routerName: default
+      conditions:
+        - type: Admitted
+          status: 'True'
+      wildcardPolicy: None
+      routerCanonicalHostname: apps.na46.prod.nextcle.com
