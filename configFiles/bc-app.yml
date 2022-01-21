@@ -37,19 +37,13 @@ spec:
       uri: 'https://github.com/openshift-instruqt/blog-django-py'
     contextDir: /
   triggers:
-    - type: Generic
-      generic:
-        secretReference:
-          name: blog-django-py-generic-webhook-secret
-    - type: GitHub
+    - type: "GitHub"
       github:
-        secretReference:
-          name: blog-django-py-github-webhook-secret
-    - type: ImageChange
-      imageChange:
-        lastTriggeredImageID: >-
-          image-registry.openshift-image-registry.svc:5000/openshift/python@sha256:210326ea7d1a940d7e8f057cc96a6115c8443658b91a95d6c0ddc91ad80566cd
-    - type: ConfigChange
+        secret: "secret101"
+    - type: "Generic"
+      generic:
+        secret: "secret101"
+    - type: "ImageChange"
   runPolicy: Serial
 status:
   lastVersion: 1
