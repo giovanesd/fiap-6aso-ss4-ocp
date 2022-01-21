@@ -38,13 +38,10 @@ spec:
         - name: blog-django-py
           image: ' '
           env:
-          - name: BLOG_BANNER_COLOR
-            valueFrom:
-              secretKeyRef:
-                name: secret-blog
-                key: blog-color
           - name: BLOG_SITE_NAME
             value: 'Blog Fiap - 6ª ASO - Grupo 16'
+          - name: BLOG_BANNER_COLOR
+            value: 'gray'
           - name: DATABASE_URL
             value: postgresql://sampledb:sampledb@sample-database:5432/sampledb
           ports:
