@@ -15,7 +15,6 @@ metadata:
     app.openshift.io/runtime: python
     app.openshift.io/runtime-version: 3.8-ubi7
 spec:
-  nodeSelector: null
   output:
     to:
       kind: ImageStreamTag
@@ -45,5 +44,3 @@ spec:
         secret: "secret101"
     - type: "ImageChange"
   runPolicy: Serial
-status:
-  lastVersion: 1
