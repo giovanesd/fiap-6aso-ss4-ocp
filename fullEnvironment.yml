@@ -199,6 +199,32 @@ kind: Service
 apiVersion: v1
 metadata:
   annotations:
+    app.openshift.io/vcs-ref: ''
+    app.openshift.io/vcs-uri: 'https://github.com/openshift-instruqt/blog-django-py'
+  name: blog-django-py
+  namespace: fiap-grupo-16
+  labels:
+    app: blog-django-py
+    app.kubernetes.io/component: blog-django-py
+    app.kubernetes.io/instance: blog-django-py
+    app.kubernetes.io/name: python
+    app.kubernetes.io/part-of: blog-django-py-app
+    app.openshift.io/runtime: python
+    app.openshift.io/runtime-version: 3.8-ubi7
+spec:
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: blog-django-py
+    deploymentconfig: blog-django-py
+---
+kind: Service
+apiVersion: v1
+metadata:
+  annotations:
     template.openshift.io/expose-uri: 'postgres://{.spec.clusterIP}:{.spec.ports[?(.name=="postgresql")].port}'
   name: sample-database
   namespace: fiap-grupo-16
@@ -258,6 +284,8 @@ spec:
           env:
           - name: BLOG_SITE_NAME
             value: 'Blog Fiap - 6ª ASO - Grupo 16'
+          - name: BLOG_BANNER_COLOR
+            value: 'gray'
           - name: DATABASE_URL
             value: postgresql://sampledb:sampledb@sample-database:5432/sampledb
           ports:
@@ -335,3 +363,51 @@ status:
           status: 'True'
       wildcardPolicy: None
       routerCanonicalHostname: apps.na46.prod.nextcle.com
+---
+kind: Build
+apiVersion: build.openshift.io/v1
+metadata:
+  annotations:
+    openshift.io/build-config.name: blog-django-py
+    openshift.io/build.number: '1'
+    openshift.io/build.pod-name: blog-django-py-2-build
+  name: blog-django-py-1
+  namespace: fiap-grupo-16
+  ownerReferences:
+    - apiVersion: build.openshift.io/v1
+      kind: BuildConfig
+      name: blog-django-py
+      uid: 695c7e41-8063-4542-9d36-f50441d87615
+      controller: true
+  labels:
+    app: blog-django-py
+    app.kubernetes.io/part-of: blog-django-py-app
+    app.kubernetes.io/instance: blog-django-py
+    openshift.io/build-config.name: blog-django-py
+    app.kubernetes.io/component: blog-django-py
+    openshift.io/build.start-policy: Serial
+    buildconfig: blog-django-py
+    app.openshift.io/runtime: python
+    app.kubernetes.io/name: python
+    app.openshift.io/runtime-version: 3.8-ubi7
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'blog-django-py:latest'
+  triggeredBy:
+    - message: Manually triggered
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: DockerImage
+        name: >-
+          registry.access.redhat.com/ubi8/python-38
+  postCommit: {}
+  serviceAccount: builder
+  source:
+    type: Git
+    git:
+      uri: 'https://github.com/openshift-instruqt/blog-django-py'
+    contextDir: /
