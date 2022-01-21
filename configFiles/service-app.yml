@@ -1,9 +1,10 @@
-kind: Route
-apiVersion: route.openshift.io/v1
+kind: Service
+apiVersion: v1
 metadata:
   annotations:
-    openshift.io/host.generated: 'true'
-  name: blog-django-py-new-link
+    app.openshift.io/vcs-ref: ''
+    app.openshift.io/vcs-uri: 'https://github.com/openshift-instruqt/blog-django-py'
+  name: blog-django-py
   namespace: fiap-grupo-16
   labels:
     app: blog-django-py
@@ -14,11 +15,11 @@ metadata:
     app.openshift.io/runtime: python
     app.openshift.io/runtime-version: 3.8-ubi7
 spec:
-  host: blogfiap.apps.na46.prod.nextcle.com
-  to:
-    kind: Service
-    name: blog-django-py
-    weight: 100
-  port:
-    targetPort: 8080-tcp
-  wildcardPolicy: None
+  ports:
+    - name: 8080-tcp
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: blog-django-py
+    deploymentconfig: blog-django-py

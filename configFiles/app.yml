@@ -7,10 +7,7 @@ metadata:
     app.openshift.io/vcs-uri: 'https://github.com/openshift-instruqt/blog-django-py'
     deployment.kubernetes.io/revision: '2'
     image.openshift.io/triggers: >-
-      [{"from":{"kind":"ImageStreamTag","name":"blog-django-py:latest","namespace":"fiap-grupo-16"},"fieldPath":"spec.template.spec.containers[?(@.name==\"blog-django-py\")].image","pause":"false"}]
-    openshift.io/generated-by: OpenShiftWebConsole
-  selfLink: /apis/apps/v1/namespaces/fiap-grupo-16/deployments/blog-django-py
-  resourceVersion: '24956234'
+      [{"from":{"kind":"ImageStreamTag","name":"blog-django-py:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"blog-django-py\")].image","pause":"false"}]
   name: blog-django-py
   generation: 2
   namespace: fiap-grupo-16
@@ -29,15 +26,27 @@ spec:
       app: blog-django-py
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: blog-django-py
         deploymentconfig: blog-django-py
     spec:
+      volumes:
+        - name: blog-data
+          persistentVolumeClaim:
+            claimName: pvc-app
       containers:
         - name: blog-django-py
-          image: >-
-            image-registry.openshift-image-registry.svc:5000/fiap-grupo-16/blog-django-py@sha256:1e17dee101be97cceb9ac5a1d2547e042c7fec1821e3c518fc5195127d03afdc
+          image: ' '
+          env:
+          - name: BLOG_BANNER_COLOR
+            valueFrom:
+              secretKeyRef:
+                name: secret-blog
+                key: blog-color
+          - name: BLOG_SITE_NAME
+            value: 'Blog Fiap - 6ª ASO - Grupo 16'
+          - name: DATABASE_URL
+            value: postgresql://sampledb:sampledb@sample-database:5432/sampledb
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -57,18 +66,3 @@ spec:
       maxSurge: 25%
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 600
-status:
-  observedGeneration: 2
-  replicas: 1
-  updatedReplicas: 1
-  readyReplicas: 1
-  availableReplicas: 1
-  conditions:
-    - type: Available
-      status: 'True'
-      reason: MinimumReplicasAvailable
-      message: Deployment has minimum availability.
-    - type: Progressing
-      status: 'True'
-      reason: NewReplicaSetAvailable
-      message: ReplicaSet "blog-django-py-8657b7cb5c" has successfully progressed.

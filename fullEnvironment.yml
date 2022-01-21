@@ -1,87 +1,54 @@
-kind: Deployment
-apiVersion: apps/v1
+kind: PersistentVolumeClaim
+apiVersion: v1
 metadata:
   annotations:
-    alpha.image.policy.openshift.io/resolve-names: '*'
-    app.openshift.io/vcs-ref: ''
-    app.openshift.io/vcs-uri: 'https://github.com/openshift-instruqt/blog-django-py'
-    deployment.kubernetes.io/revision: '2'
-    image.openshift.io/triggers: >-
-      [{"from":{"kind":"ImageStreamTag","name":"blog-django-py:latest","namespace":"fiap-grupo-16"},"fieldPath":"spec.template.spec.containers[?(@.name==\"blog-django-py\")].image","pause":"false"}]
-    openshift.io/generated-by: OpenShiftWebConsole
-  selfLink: /apis/apps/v1/namespaces/fiap-grupo-16/deployments/blog-django-py
-  resourceVersion: '24956234'
-  name: blog-django-py
-  generation: 2
+    volume.beta.kubernetes.io/storage-provisioner: kubernetes.io/cinder
+  name: sample-database
   namespace: fiap-grupo-16
-  labels:
-    app: blog-django-py
-    app.kubernetes.io/component: blog-django-py
-    app.kubernetes.io/instance: blog-django-py
-    app.kubernetes.io/name: python
-    app.kubernetes.io/part-of: blog-django-py-app
-    app.openshift.io/runtime: python
-    app.openshift.io/runtime-version: 3.8-ubi7
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: blog-django-py
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: blog-django-py
-        deploymentconfig: blog-django-py
-    spec:
-      containers:
-        - name: blog-django-py
-          image: >-
-            image-registry.openshift-image-registry.svc:5000/fiap-grupo-16/blog-django-py@sha256:1e17dee101be97cceb9ac5a1d2547e042c7fec1821e3c518fc5195127d03afdc
-          ports:
-            - containerPort: 8080
-              protocol: TCP
-          resources: {}
-          terminationMessagePath: /dev/termination-log
-          terminationMessagePolicy: File
-          imagePullPolicy: Always
-      restartPolicy: Always
-      terminationGracePeriodSeconds: 30
-      dnsPolicy: ClusterFirst
-      securityContext: {}
-      schedulerName: default-scheduler
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 25%
-      maxSurge: 25%
-  revisionHistoryLimit: 10
-  progressDeadlineSeconds: 600
-status:
-  observedGeneration: 2
-  replicas: 1
-  updatedReplicas: 1
-  readyReplicas: 1
-  availableReplicas: 1
-  conditions:
-    - type: Available
-      status: 'True'
-      reason: MinimumReplicasAvailable
-      message: Deployment has minimum availability.
-    - type: Progressing
-      status: 'True'
-      reason: NewReplicaSetAvailable
-      message: ReplicaSet "blog-django-py-8657b7cb5c" has successfully progressed.
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+  volumeMode: Filesystem
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-provisioner: kubernetes.io/cinder
+  name: pvc-app
+  namespace: fiap-grupo-16
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 512Mi
+  storageClassName: standard
+  volumeMode: Filesystem
+---
+kind: Secret
+apiVersion: v1
+metadata:
+    name: secret-app
+data:
+  app-color: J2dyYXkn
+---
+kind: Secret
+apiVersion: v1
+metadata:
+    name: secret-sample-database
+data:
+  database-name: c2FtcGxlZGI=
+  database-password: c2FtcGxlZGI=
+  database-user: c2FtcGxlZGI=
 ---
 kind: DeploymentConfig
 apiVersion: apps.openshift.io/v1
 metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-    template.alpha.openshift.io/wait-for-ready: 'true'
-  selfLink: >-
-    /apis/apps.openshift.io/v1/namespaces/fiap-grupo-16/deploymentconfigs/sample-database
-  resourceVersion: '24947724'
   name: sample-database
   generation: 2
   namespace: fiap-grupo-16
@@ -89,7 +56,6 @@ metadata:
     app: sample-database
     app.kubernetes.io/component: sample-database
     app.kubernetes.io/instance: sample-database
-    template: postgresql-persistent-template
 spec:
   strategy:
     type: Recreate
@@ -107,8 +73,6 @@ spec:
           kind: ImageStreamTag
           namespace: openshift
           name: 'postgresql:10-el8'
-        lastTriggeredImage: >-
-          image-registry.openshift-image-registry.svc:5000/openshift/postgresql@sha256:c58b255376a4c1f6744b56389f0984f465b74e9c6a62626894f850ab74dec0ea
     - type: ConfigChange
   replicas: 1
   revisionHistoryLimit: 10
@@ -117,11 +81,8 @@ spec:
     name: sample-database
   template:
     metadata:
-      creationTimestamp: null
       labels:
         name: sample-database
-      annotations:
-        openshift.io/generated-by: OpenShiftNewApp
     spec:
       volumes:
         - name: sample-database-data
@@ -156,17 +117,17 @@ spec:
             - name: POSTGRESQL_USER
               valueFrom:
                 secretKeyRef:
-                  name: sample-database
+                  name: secret-sample-database
                   key: database-user
             - name: POSTGRESQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: sample-database
+                  name: secret-sample-database
                   key: database-password
             - name: POSTGRESQL_DATABASE
               valueFrom:
                 secretKeyRef:
-                  name: sample-database
+                  name: secret-sample-database
                   key: database-name
           securityContext:
             capabilities: {}
@@ -179,33 +140,126 @@ spec:
             - name: sample-database-data
               mountPath: /var/lib/pgsql/data
           terminationMessagePolicy: File
-          image: >-
-            image-registry.openshift-image-registry.svc:5000/openshift/postgresql@sha256:c58b255376a4c1f6744b56389f0984f465b74e9c6a62626894f850ab74dec0ea
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
       securityContext: {}
       schedulerName: default-scheduler
+---
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  annotations:
+    app.openshift.io/vcs-ref: ''
+    app.openshift.io/vcs-uri: 'https://github.com/openshift-instruqt/blog-django-py'
+  name: blog-django-py
+  namespace: fiap-grupo-16
+  labels:
+    app: blog-django-py
+    app.kubernetes.io/component: blog-django-py
+    app.kubernetes.io/instance: blog-django-py
+    app.kubernetes.io/name: python
+    app.kubernetes.io/part-of: blog-django-py-app
+    app.openshift.io/runtime: python
+    app.openshift.io/runtime-version: 3.8-ubi7
+spec:
+  nodeSelector: null
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'blog-django-py:latest'
+  resources: {}
+  successfulBuildsHistoryLimit: 5
+  failedBuildsHistoryLimit: 5
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        namespace: openshift
+        name: 'python:3.8-ubi7'
+  postCommit: {}
+  source:
+    type: Git
+    git:
+      uri: 'https://github.com/openshift-instruqt/blog-django-py'
+    contextDir: /
+  triggers:
+    - type: Generic
+      generic:
+        secretReference:
+          name: blog-django-py-generic-webhook-secret
+    - type: GitHub
+      github:
+        secretReference:
+          name: blog-django-py-github-webhook-secret
+    - type: ImageChange
+      imageChange:
+        lastTriggeredImageID: >-
+          image-registry.openshift-image-registry.svc:5000/openshift/python@sha256:210326ea7d1a940d7e8f057cc96a6115c8443658b91a95d6c0ddc91ad80566cd
+    - type: ConfigChange
+  runPolicy: Serial
 status:
-  observedGeneration: 2
-  details:
-    message: config change
-    causes:
-      - type: ConfigChange
-  availableReplicas: 1
-  unavailableReplicas: 0
-  latestVersion: 1
-  updatedReplicas: 1
-  conditions:
-    - type: Available
-      status: 'True'
-      message: Deployment config has minimum availability.
-    - type: Progressing
-      status: 'True'
-      reason: NewReplicationControllerAvailable
-      message: replication controller "sample-database-1" successfully rolled out
+  lastVersion: 1
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  annotations:
+    alpha.image.policy.openshift.io/resolve-names: '*'
+    app.openshift.io/vcs-ref: ''
+    app.openshift.io/vcs-uri: 'https://github.com/openshift-instruqt/blog-django-py'
+    deployment.kubernetes.io/revision: '2'
+    image.openshift.io/triggers: >-
+      [{"from":{"kind":"ImageStreamTag","name":"blog-django-py:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"blog-django-py\")].image","pause":"false"}]
+  name: blog-django-py
+  generation: 2
+  namespace: fiap-grupo-16
+  labels:
+    app: blog-django-py
+    app.kubernetes.io/component: blog-django-py
+    app.kubernetes.io/instance: blog-django-py
+    app.kubernetes.io/name: python
+    app.kubernetes.io/part-of: blog-django-py-app
+    app.openshift.io/runtime: python
+    app.openshift.io/runtime-version: 3.8-ubi7
+spec:
   replicas: 1
-  readyReplicas: 1
+  selector:
+    matchLabels:
+      app: blog-django-py
+  template:
+    metadata:
+      labels:
+        app: blog-django-py
+        deploymentconfig: blog-django-py
+    spec:
+      volumes:
+        - name: blog-data
+          persistentVolumeClaim:
+            claimName: pvc-app
+      containers:
+        - name: blog-django-py
+          image: ' '
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
 ---
 apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler

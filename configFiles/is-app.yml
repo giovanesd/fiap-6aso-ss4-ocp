@@ -1,0 +1,12 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  annotations:
+    app.openshift.io/vcs-ref: ''
+    app.openshift.io/vcs-uri: 'https://github.com/openshift-instruqt/blog-django-py'
+  name: blog-django-py
+  generation: 1
+  namespace: fiap-grupo-16
+spec:
+  lookupPolicy:
+    local: false
